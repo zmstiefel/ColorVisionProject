@@ -7,6 +7,7 @@
 This program serves as an interactive color vision checking tool designed to evaluate accessibility between color pairs. It allows users to input two color names and choose a specific test to run. The program can analyze whether the chosen pair represents a contrast issue or creates potential readability challenges for individuals with red-green color blindness. By running in a continuous loop, it enables designers and users to quickly evaluate multiple color combinations in a single session.
 
 **version 2.0**
+
 Version 2.0 improves the Color Compatibility Checker by allowing users to enter custom hexadecimal color codes instead of selecting from eight predetermined colors. Users can now enter between 2 and 20 colors, and the program automatically compares every possible pair.
 
 New Features
