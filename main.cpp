@@ -1,88 +1,284 @@
-#include <iostream>
-#include <string>
-using namespace std;
-int main (){
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <iomanip> // Found in cplusplus.com.
+#include <cctype>  // Found in cplusplus.com.
+#include <cmath>
+#include <limits>  // Found in cplusplus.com.
+
+using namespace std;
+
+// Function prototypes: tell main() which functions are available.
+bool isValidHex(string hexCode);
+void getColors(vector<string>& colors, int count);
+double getLuminance(string hexCode);
+double getContrastRatio(string firstColor, string secondColor);
+void displayResults(const vector<string>& colors, ostream& output);
+void saveResults(const vector<string>& colors);
+
+int main() {
     char testAgain = 'y';
 
-    //loop: keeps running while user types 'y'
-    while (testAgain == 'y'){
-        //variables: 2 strings and 1 integer
-        int color1 = 0;
-        int color2 = 0;
-        int option = 0;
+    //while loop: keeps running while user types 'y' or 'Y'.
 
-        //Intro (work in progress)
-        cout << "Welcome! This is the Color Compatibility Checker specifically geared for detecting a color pair's compatibility with red-green color blindness." << endl;
-        cout << "Here are the colors you may choose from:\n";
-        cout << "1.Red\n2.Orange\n3.Yellow\n4.Green\n5.Blue\n6.Indigo\n7.Violet\n8.Pink\n\n";
+    //Intro (work in progress).
+    cout << "Welcome to the Color Compatibility Checker 2.0!\n";
+    cout << "Compare hex colors for text/background contrast.\n";
+    cout << "Note: Contrast does not guarantee colorblind accessibility.\n";
 
-        //standard I/O input color names
-       do{
-        cout << "Enter color 1 (1-8): ";
-        cin >> color1;
-        if (color1 < 1 || color1 > 8){
-            cout << "Invalid selection! Please choose a number between 1 and 7.\n";
-        }
-       } while (color1 < 1 || color1 > 8);
-       
-        do{
-            cout << "Enter color 2 (1-8): ";
-            cin >> color2;
-            if (color2 < 1 || color2 > 8){
-            cout << "Invalid selection! Please choose a number between 1 and 8.\n";
-        }
-       } while (color2 < 1 || color2 > 8);
+    while (testAgain == 'y' || testAgain == 'Y') {
 
-        do{
-        cout << "\n1. Check for compatibility of color pair for red-green color blindness\n";
-        cout << "2. Check for same color\n";
-        cout << "Enter choice (1 or 2): ";
-        cin >> option;
-        if (option != 1 && option != 2){
-            cout << "Invalid choice! Please enter 1 or 2.\n";
-        }
-            } while (option != 1 && option !=2);
+        //variables: store the number of colors and menu choice.
+        int colorCount = 0;
 
-        
-        //decision 1 switch statement
+        // New: user chooses how many colors to enter.
+        cout << "\nHow many colors would you like to test (2-20)? ";
 
-        switch (option){
-            case 1:
-            //decisions 2 and 3 if else if and else
-                if (color1 == 1 && color2 == 4){
-                cout << "Warning: Red and green are hard to tell apart for red-green type color blindness!\n";
-            }   else if (color1 == 4 && color2 == 1){
-                cout << "Warning: Green and red are hard to tell apart for red-green type color blindness!\n";
-            } else {
-                cout << "This pair looks okay for red-green colorblindness.\n";
+        while (true) {
+            if (!(cin >> colorCount)) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
             }
-            break;
-            case 2:
-                if (color1 == color2){
-                    cout << "Warning: Both colors have the exact same name!\n";
-                }
-                if (color1 != color2){
-                    cout << "These colors are not the same.\n";
-                }
-                    break;
-            default:
-            cout << "Invalid choice.\n";
-            break;
+            else if (colorCount >= 2 && colorCount <= 20) {
+                break;
+            }
+
+            cout << "Please enter a whole number from 2 to 20: ";
         }
-        do{
-        cout << "\nWould you like to test another pair? (y/n): ";
+
+        // New: vector stores as many hex colors as the user selects.
+        vector<string> colors;
+        getColors(colors, colorCount);
+
+        // New: allow the user to quit early without losing entered colors.
+        if (colors.size() < 2) {
+            cout << "At least two colors are needed for comparison.\n";
+        }
+        else {
+
+            //standard I/O input color names (now hex codes).
+            int option = 0;
+
+            while (option != 4) {
+                cout << "\n1. Compare all color pairs\n";
+                cout << "2. Check for duplicate colors\n";
+                cout << "3. Save results to a file\n";
+                cout << "4. Finish this set\n";
+                cout << "Enter choice (1-4): ";
+
+                if (!(cin >> option)) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    option = 0;
+                }
+
+                //decision 1 switch statement.
+                switch (option) {
+
+                    case 1:
+                        displayResults(colors, cout);
+                        break;
+
+                    case 2: {
+                        //decisions 2 and 3 if else if and else.
+                        // New: nested loops check each unique pair for duplicates.
+                        bool foundDuplicate = false;
+
+                        for (int i = 0; i < static_cast<int>(colors.size()); i++) {
+                            for (int j = i + 1; j < static_cast<int>(colors.size()); j++) {
+
+                                if (colors[i] == colors[j]) {
+                                    cout << "Duplicate: color " << i + 1
+                                         << " and color " << j + 1
+                                         << " (" << colors[i] << ")\n";
+
+                                    foundDuplicate = true;
+                                }
+                            }
+                        }
+
+                        if (!foundDuplicate) {
+                            cout << "No duplicate colors found.\n";
+                        }
+
+                        break;
+                    }
+
+                    case 3:
+                        saveResults(colors);
+                        break;
+
+                    case 4:
+                        break;
+
+                    default:
+                        cout << "Invalid choice! Please enter 1, 2, 3, or 4.\n";
+                        break;
+                }
+            }
+        }
+
+        //do while for invalid input (implemented here with while).
+        cout << "\nWould you like to test another set? (y/n): ";
         cin >> testAgain;
-        
-        if (testAgain != 'y' && testAgain != 'Y' && testAgain != 'n' && testAgain != 'N'){
-            cout << "Invalid choice! Please enter 'y' for yes or 'n' for no.\n";
+
+        while (testAgain != 'y' && testAgain != 'Y' &&
+               testAgain != 'n' && testAgain != 'N') {
+
+            cout << "Please enter y or n: ";
+            cin >> testAgain;
         }
-    } while (testAgain != 'y' && testAgain != 'Y' && testAgain != 'n' && testAgain  != 'N');
+
         cout << "\n";
     }
-        cout << "Done!\n";
-        return 0;
+
+    //at the end, always prints Done!
+    cout << "Done!\n";
+
+    return 0;
+}
+
+// New function: pass-by-value receives a copy of the hex code.
+// Returns true only when the code is # followed by six hex digits.
+bool isValidHex(string hexCode) {
+    if (hexCode.length() != 7 || hexCode[0] != '#') {
+        return false;
     }
 
+    for (int i = 1; i < 7; i++) {
+        if (!isxdigit(static_cast<unsigned char>(hexCode[i]))) {
+            return false;
+        }
+    }
 
+    return true;
+}
 
+// New function: pass-by-reference adds entries to the original vector.
+// A loop asks for each color and repeats the prompt for invalid input.
+// New: the user can enter Q or q to stop entering colors early.
+void getColors(vector<string>& colors, int count) {
+    for (int i = 0; i < count; i++) {
+        string hexCode;
+
+        do {
+            cout << "Enter hex code for color " << i + 1
+                 << " (example #FF0000, or Q to quit): ";
+            cin >> hexCode;
+
+            // New: quit color entry without losing previous colors.
+            if (hexCode == "Q" || hexCode == "q") {
+                cout << "Color entry finished. "
+                     << colors.size() << " colors saved.\n";
+                return;
+            }
+
+            if (!isValidHex(hexCode)) {
+                cout << "Invalid hex code! Use # followed by six hex digits.\n";
+            }
+
+        } while (!isValidHex(hexCode));
+
+        // New: convert lowercase hex letters to uppercase.
+        for (char& letter : hexCode) {
+            letter = static_cast<char>(
+                toupper(static_cast<unsigned char>(letter))
+            );
+        }
+
+        colors.push_back(hexCode);
+    }
+}
+
+// New function: convert each hex color channel to a number.
+// Calculate WCAG relative luminance from a six-digit sRGB hex code.
+double getLuminance(string hexCode) {
+    double channels[3];
+
+    for (int i = 0; i < 3; i++) {
+        int channel = stoi(hexCode.substr(1 + i * 2, 2), nullptr, 16);
+        double value = channel / 255.0;
+
+        channels[i] = (value <= 0.04045)
+                      ? value / 12.92
+                      : pow((value + 0.055) / 1.055, 2.4);
+    }
+
+    return 0.2126 * channels[0]
+         + 0.7152 * channels[1]
+         + 0.0722 * channels[2];
+}
+
+// New function: calculate contrast between two colors.
+// The lighter color is divided by the darker color using the WCAG formula.
+double getContrastRatio(string firstColor, string secondColor) {
+    double first = getLuminance(firstColor);
+    double second = getLuminance(secondColor);
+
+    double lighter = (first > second) ? first : second;
+    double darker = (first > second) ? second : first;
+
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
+// New function: nested loops compare every unique pair of colors.
+// ostream lets the same report go to the console or an output file.
+void displayResults(const vector<string>& colors, ostream& output) {
+    output << "\nColor contrast results:\n";
+    output << fixed << setprecision(2);
+
+    for (int i = 0; i < static_cast<int>(colors.size()); i++) {
+        for (int j = i + 1; j < static_cast<int>(colors.size()); j++) {
+
+            double ratio = getContrastRatio(colors[i], colors[j]);
+
+            output << colors[i] << " and " << colors[j]
+                   << ": " << ratio << ":1 - ";
+
+            if (ratio >= 4.5) {
+                output << "Passes WCAG AA for normal-sized text";
+            }
+            else if (ratio >= 3.0) {
+                output << "Passes WCAG AA for large text only";
+            }
+            else {
+                output << "Does not meet WCAG AA text contrast minimums";
+            }
+
+            if (colors[i] == colors[j]) {
+                output << " (duplicate colors)";
+            }
+
+            output << "\n";
+        }
+    }
+
+    output << "Contrast measures readability, not colorblind distinguishability.\n";
+}
+
+// New function: file output saves the colors and comparison results.
+// ofstream creates or replaces the report file.
+void saveResults(const vector<string>& colors) {
+    ofstream outputFile("color_results.txt");
+
+    if (!outputFile.is_open()) {
+        cout << "Error: Could not open color_results.txt for writing.\n";
+        return;
+    }
+
+    outputFile << "Color Compatibility Checker 2.0\n";
+    outputFile << "Entered colors:\n";
+
+    for (int i = 0; i < static_cast<int>(colors.size()); i++) {
+        outputFile << i + 1 << ". " << colors[i] << "\n";
+    }
+
+    displayResults(colors, outputFile);
+
+    outputFile.close();
+
+    cout << "Results saved to color_results.txt\n";
+    cout << "Note: Saving again will replace the previous report.\n";
+}
